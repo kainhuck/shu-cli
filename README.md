@@ -7,3 +7,7 @@ shu-cli 是一个 终端可交互的 cli
 ```
 >>> cmd arg1 arg2
 ```
+
+## todo
+
+lots of

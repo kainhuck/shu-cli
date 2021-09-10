@@ -4,71 +4,71 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/kainhuck/shu-cli/internal/color"
+	"github.com/kainhuck/shu-cli/color"
 	"os"
 	"strings"
 )
 
-type HandlerFunc func(args ...string)
-
-type cli struct {
+type Cli struct {
 	ctx        context.Context
 	cancel     context.CancelFunc
-	welcomeMsg string
-	container  map[string]HandlerFunc
-	prompt     string
-	color      color.Color
-	stdout     *os.File
-	stdin      *os.File
-	stderr     *os.File
+	welcomeMsg string      // 欢迎语句
+	prompt     string      // 输入提示符
+	color      color.Color // 颜色输出模块
+	stdout     *os.File    // 标准输出
+	stdin      *os.File    // 标准输入
 }
 
-func DefaultCli() *cli {
-	c := &cli{
-		prompt: ">>> ",
-		color:  true,
-		stdout: os.Stdout,
-		stdin:  os.Stdin,
-		stderr: os.Stderr,
+// NewCli 新建cli
+func NewCli(ctx context.Context, cancel context.CancelFunc, prompt string, colorMod bool, stdout, stdin *os.File) *Cli {
+	return &Cli{
+		prompt: prompt,
+		color:  color.Color(colorMod),
+		stdout: stdout,
+		stdin:  stdin,
+		ctx:    ctx,
+		cancel: cancel,
 	}
-	c.ctx, c.cancel = context.WithCancel(context.Background())
-	container := make(map[string]HandlerFunc)
-	container[CmdHelp] = handleHelp
-	container[CmdExit] = c.handleExit
-	c.container = container
-
-	return c
 }
 
-func (c *cli) SetPrompt(prompt string) {
-	c.prompt = prompt
+// DefaultCli 新建默认的cli
+func DefaultCli() *Cli {
+	ctx, cancel := context.WithCancel(context.Background())
+	return NewCli(ctx, cancel, ">>> ", true, os.Stdout, os.Stdin)
 }
 
-func (c *cli) SetColorMod(colorMod bool) {
-	c.color = color.Color(colorMod)
-}
-
-func (c *cli) SetWelcomeMsg(msg string) {
+// SetWelcomeMsg 设置欢迎语句
+func (c *Cli) SetWelcomeMsg(msg string) {
 	c.welcomeMsg = msg
 }
 
-func (c *cli) SetStdOut(file *os.File) {
+// SetPrompt 设置输入提示符
+func (c *Cli) SetPrompt(prompt string) {
+	c.prompt = prompt
+}
+
+// SetColorMod 设置色彩模式
+func (c *Cli) SetColorMod(colorMod bool) {
+	c.color = color.Color(colorMod)
+}
+
+// SetStdOut 设置标准输出
+func (c *Cli) SetStdOut(file *os.File) {
 	c.stdout = file
 }
 
-func (c *cli) SetStdIn(file *os.File) {
+// SetStdIn 设置标准输入
+func (c *Cli) SetStdIn(file *os.File) {
 	c.stdin = file
 }
 
-func (c *cli) SetStdErr(file *os.File) {
-	c.stderr = file
+// CancelFunc 返回cancel()
+func (c *Cli) CancelFunc() context.CancelFunc {
+	return c.cancel
 }
 
-func (c *cli) Register(cmd string, handler HandlerFunc) {
-	c.container[cmd] = handler
-}
-
-func (c *cli) Run() {
+// Run 运行cli，调用 cancel 可退出
+func (c *Cli) Run() {
 	if len(c.welcomeMsg) > 0 {
 		c.println(c.color.Yellow(c.welcomeMsg))
 	}
@@ -80,46 +80,28 @@ func (c *cli) Run() {
 			c.printf(c.color.Purple(c.prompt))
 			input, err := reader.ReadString('\n')
 			if err != nil {
-				c.errorln(err)
+				c.println(err)
 			}
 			c.handleInput(input)
 		}
 	}()
 
 	<-c.ctx.Done()
-	c.printf(c.color.Blue("Bye~"))
 }
 
-func (c *cli) handleInput(input string) {
-	input = strings.TrimSpace(input)
-	cmds := strings.Split(input, " ")
-	if len(cmds[0]) == 0 {
-		return
-	}
-
-	if f, ok := c.container[cmds[0]]; ok {
-		f(cmds[1:]...)
-		return
-	}
-	c.errorf(c.color.Red("unSupport cmd `%v`\n"), cmds[0])
-}
-
-func (c *cli) handleExit(args ...string) {
-	c.cancel()
-}
-
-func (c *cli) println(a ...interface{}) {
+func (c *Cli) println(a ...interface{}) {
 	_, _ = fmt.Fprintln(c.stdout, a...)
 }
 
-func (c *cli) printf(format string, a ...interface{}) {
+func (c *Cli) printf(format string, a ...interface{}) {
 	_, _ = fmt.Fprintf(c.stdout, format, a...)
 }
 
-func (c *cli) errorln(a ...interface{}) {
-	_, _ = fmt.Fprintln(c.stderr, a...)
-}
-
-func (c *cli) errorf(format string, a ...interface{}) {
-	_, _ = fmt.Fprintf(c.stderr, format, a...)
+func (c *Cli) handleInput(input string) {
+	input = strings.TrimSpace(input)
+	if len(input) == 0{
+		c.printf(input)
+	}else{
+		c.println(input)
+	}
 }

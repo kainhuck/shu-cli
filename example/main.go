@@ -6,6 +6,12 @@ import (
 
 func main() {
 	cli := CLI.DefaultCli()
-	cli.SetWelcomeMsg("welcome to use the `shu-cli`")
+	cli.SetWelcomeMsg(`
+███████╗██╗  ██╗██╗   ██╗
+██╔════╝██║  ██║██║   ██║
+███████╗███████║██║   ██║
+╚════██║██╔══██║██║   ██║
+███████║██║  ██║╚██████╔╝
+╚══════╝╚═╝  ╚═╝ ╚═════╝`)
 	cli.Run()
 }

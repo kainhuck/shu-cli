@@ -210,6 +210,46 @@ func Load(key string) (value interface{}, ok bool) {
 	return
 }
 
+// Black 黑色输出
+func Black(s string) string {
+	return cli.color.Black(s)
+}
+
+// Red 红色输出
+func Red(s string) string {
+	return cli.color.Red(s)
+}
+
+// Green 绿色输出
+func Green(s string) string {
+	return cli.color.Green(s)
+}
+
+// Yellow 黄色输出
+func Yellow(s string) string {
+	return cli.color.Yellow(s)
+}
+
+// Blue 蓝色输出
+func Blue(s string) string {
+	return cli.color.Blue(s)
+}
+
+// Purple 紫色输出
+func Purple(s string) string {
+	return cli.color.Purple(s)
+}
+
+// Cyan 青色输出
+func Cyan(s string) string {
+	return cli.color.Cyan(s)
+}
+
+// Gray 灰色输出
+func Gray(s string) string {
+	return cli.color.Gray(s)
+}
+
 // ======================定义一些默认的命令======================
 
 var exitCmd = &cmd.Command{

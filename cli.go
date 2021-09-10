@@ -80,7 +80,7 @@ func (c *Cli) Run() {
 			c.printf(c.color.Purple(c.prompt))
 			input, err := reader.ReadString('\n')
 			if err != nil {
-				c.println(err)
+				c.println(c.color.Red(fmt.Sprintf("%s", err)))
 			}
 			c.handleInput(input)
 		}

@@ -37,6 +37,7 @@ func NewCli(ctx context.Context, cancel context.CancelFunc, prompt string, color
 	}
 
 	cli.Register(exitCmd)
+	cli.Register(helpCmd)
 
 	return cli
 }
@@ -172,5 +173,30 @@ var exitCmd = &cmd.Command{
 	Handler: func(args ...string) {
 		cli.cancel()
 		cli.println(cli.color.Yellow("Bye~"))
+	},
+}
+
+var helpCmd = &cmd.Command{
+	Cmd:     "help",
+	Usage:   "help or help <cmd> ...",
+	Desc:    "print the help info for cmds",
+	Handler: func(args ...string) {
+		if len(args) == 0 {
+			cli.println("All Commands [cmd] [usage]:")
+			for k, v := range cli.cmds{
+				cli.printf("	%s	%s\n", cli.color.Green(k), v.Usage)
+			}
+			return
+		}
+
+		for _, a := range args{
+			cmd, ok := cli.cmds[a]
+			if !ok {
+				cli.printf(cli.color.Red("unknown cmd: `%s`\n"), a)
+			}
+			cli.printf("	cmd:	%s\n", cmd.Cmd)
+			cli.printf("	Usage:	%s\n", cmd.Usage)
+			cli.printf("	Desc:	%s\n", cmd.Desc)
+		}
 	},
 }

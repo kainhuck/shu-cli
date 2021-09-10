@@ -7,6 +7,7 @@ import (
 	"github.com/kainhuck/shu-cli/cmd"
 	"github.com/kainhuck/shu-cli/color"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -18,6 +19,7 @@ type Cli struct {
 	color      color.Color // 颜色输出模块
 	stdout     *os.File    // 标准输出
 	reader     *bufio.Reader
+	database   map[string]interface{} // 内存数据库，可以存放一些数据
 
 	cmds map[string]*cmd.Command
 }
@@ -27,13 +29,14 @@ var cli *Cli
 // NewCli 新建cli
 func NewCli(ctx context.Context, cancel context.CancelFunc, prompt string, colorMod bool, stdout, stdin *os.File) *Cli {
 	cli = &Cli{
-		prompt: prompt,
-		color:  color.Color(colorMod),
-		stdout: stdout,
-		reader: bufio.NewReader(stdin),
-		ctx:    ctx,
-		cancel: cancel,
-		cmds:   make(map[string]*cmd.Command),
+		prompt:   prompt,
+		color:    color.Color(colorMod),
+		stdout:   stdout,
+		reader:   bufio.NewReader(stdin),
+		ctx:      ctx,
+		cancel:   cancel,
+		cmds:     make(map[string]*cmd.Command),
+		database: make(map[string]interface{}),
 	}
 
 	cli.Register(exitCmd)
@@ -146,12 +149,44 @@ func (c *Cli) handleInput(cmdArgs []string) {
 	c.prompt = prompt
 }
 
-// 定义一些全局方法供使用
+// ======================定义一些全局方法供使用======================
 
 // ReadInput 从cli.stdin读取用户输入 会先打印提示语句 prompt
 func ReadInput(prompt string) []string {
 	cli.println(prompt)
 	return cli.readInput()
+}
+
+// ReadOne 只读取第一个输入，如果不存在则输出 空字符串
+func ReadOne(prompt string) string {
+	all := ReadInput(prompt)
+	if len(all) == 0 {
+		return ""
+	}
+
+	return all[0]
+}
+
+// ReadInt 将读到的slice转成int slice，如果转换失败 则置为0
+func ReadInt(prompt string) []int {
+	strSlice := ReadInput(prompt)
+	intSlice := make([]int, len(strSlice))
+
+	for i := 0; i < len(strSlice); i++ {
+		intSlice[i], _ = strconv.Atoi(strSlice[i])
+	}
+
+	return intSlice
+}
+
+// ReadOneInt 只读取第一个int 如果不存在则输出 0
+func ReadOneInt(prompt string) int{
+	all := ReadInt(prompt)
+	if len(all) == 0{
+		return 0
+	}
+
+	return all[0]
 }
 
 // Printf 格式化输出到cli.stdout
@@ -164,12 +199,23 @@ func Println(a ...interface{}) {
 	cli.println(a...)
 }
 
-// 定义一些默认的命令
+// Store 用于存放数据到内存中
+func Store(key string, value interface{}) {
+	cli.database[key] = value
+}
+
+// Load 从内存数据库中取数据
+func Load(key string) (value interface{}, ok bool) {
+	value, ok = cli.database[key]
+	return
+}
+
+// ======================定义一些默认的命令======================
 
 var exitCmd = &cmd.Command{
-	Cmd:     "exit",
-	Usage:   "exit",
-	Desc:    "exit the cli",
+	Cmd:   "exit",
+	Usage: "exit",
+	Desc:  "exit the cli",
 	Handler: func(args ...string) {
 		cli.cancel()
 		cli.println(cli.color.Yellow("Bye~"))
@@ -177,19 +223,19 @@ var exitCmd = &cmd.Command{
 }
 
 var helpCmd = &cmd.Command{
-	Cmd:     "help",
-	Usage:   "help or help <cmd> ...",
-	Desc:    "print the help info for cmds",
+	Cmd:   "help",
+	Usage: "help or help <cmd> ...",
+	Desc:  "print the help info for cmds",
 	Handler: func(args ...string) {
 		if len(args) == 0 {
 			cli.println("All Commands [cmd] [usage]:")
-			for k, v := range cli.cmds{
+			for k, v := range cli.cmds {
 				cli.printf("	%s	%s\n", cli.color.Green(k), v.Usage)
 			}
 			return
 		}
 
-		for _, a := range args{
+		for _, a := range args {
 			cmd, ok := cli.cmds[a]
 			if !ok {
 				cli.printf(cli.color.Red("unknown cmd: `%s`\n"), a)

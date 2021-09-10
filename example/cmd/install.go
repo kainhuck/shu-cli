@@ -3,10 +3,11 @@ package cmd
 import (
 	"fmt"
 	CLI "github.com/kainhuck/shu-cli"
+	"github.com/kainhuck/shu-cli/cmd"
 	"strconv"
 )
 
-var InstallCmd = &CLI.Command{
+var InstallCmd = &cmd.Command{
 	Cmd: "install",
 	Usage: "install remote/local",
 	Desc: "install remote/local",

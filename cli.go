@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/kainhuck/shu-cli/cmd"
 	"github.com/kainhuck/shu-cli/color"
 	"os"
 	"strings"
@@ -18,7 +19,7 @@ type Cli struct {
 	stdout     *os.File    // 标准输出
 	reader     *bufio.Reader
 
-	cmds map[string]*Command
+	cmds map[string]*cmd.Command
 }
 
 var cli *Cli
@@ -32,7 +33,7 @@ func NewCli(ctx context.Context, cancel context.CancelFunc, prompt string, color
 		reader: bufio.NewReader(stdin),
 		ctx:    ctx,
 		cancel: cancel,
-		cmds:   make(map[string]*Command),
+		cmds:   make(map[string]*cmd.Command),
 	}
 
 	return cli
@@ -108,7 +109,7 @@ func (c *Cli) readInput() []string {
 }
 
 // Register 注册命令
-func (c *Cli) Register(cmd *Command) {
+func (c *Cli) Register(cmd *cmd.Command) {
 	c.cmds[cmd.Cmd] = cmd
 }
 

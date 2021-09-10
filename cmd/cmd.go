@@ -1,4 +1,4 @@
-package shu_cli
+package cmd
 
 type HandleFunc = func(args ...string)
 

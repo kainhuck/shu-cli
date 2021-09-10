@@ -3,6 +3,7 @@ package main
 import (
 	"example/cmd"
 	CLI "github.com/kainhuck/shu-cli"
+	cmd2 "github.com/kainhuck/shu-cli/cmd"
 	"strings"
 )
 
@@ -16,7 +17,7 @@ func main() {
 ███████║██║  ██║╚██████╔╝
 ╚══════╝╚═╝  ╚═╝ ╚═════╝`)
 
-	cli.Register(&CLI.Command{
+	cli.Register(&cmd2.Command{
 		Cmd:     "echo",
 		Usage:   "echo args...",
 		Desc:    "echo args...",

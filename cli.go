@@ -16,7 +16,9 @@ type Cli struct {
 	prompt     string      // 输入提示符
 	color      color.Color // 颜色输出模块
 	stdout     *os.File    // 标准输出
-	stdin      *os.File    // 标准输入
+	reader     *bufio.Reader
+
+	cmds map[string]*Command
 }
 
 // NewCli 新建cli
@@ -25,9 +27,10 @@ func NewCli(ctx context.Context, cancel context.CancelFunc, prompt string, color
 		prompt: prompt,
 		color:  color.Color(colorMod),
 		stdout: stdout,
-		stdin:  stdin,
+		reader: bufio.NewReader(stdin),
 		ctx:    ctx,
 		cancel: cancel,
+		cmds:   make(map[string]*Command),
 	}
 }
 
@@ -59,7 +62,7 @@ func (c *Cli) SetStdOut(file *os.File) {
 
 // SetStdIn 设置标准输入
 func (c *Cli) SetStdIn(file *os.File) {
-	c.stdin = file
+	c.reader = bufio.NewReader(file)
 }
 
 // CancelFunc 返回cancel()
@@ -73,20 +76,36 @@ func (c *Cli) Run() {
 		c.println(c.color.Yellow(c.welcomeMsg))
 	}
 
-	reader := bufio.NewReader(c.stdin)
-
 	go func() {
 		for {
-			c.printf(c.color.Purple(c.prompt))
-			input, err := reader.ReadString('\n')
-			if err != nil {
-				c.println(c.color.Red(fmt.Sprintf("%s", err)))
-			}
-			c.handleInput(input)
+			c.handleInput(c.readInput())
 		}
 	}()
 
 	<-c.ctx.Done()
+}
+
+// readInput 读取输入
+func (c *Cli) readInput() []string {
+	c.printf(c.color.Purple(c.prompt))
+	input, _ := c.reader.ReadString('\n')
+	input = strings.TrimSpace(input)
+	if len(input) == 0 {
+		return nil
+	}
+
+	// 分离命令和参数
+	cmdArgs := strings.Split(input, " ")
+	for i := 0; i < len(cmdArgs); i++ {
+		cmdArgs[i] = strings.TrimSpace(cmdArgs[i])
+	}
+
+	return cmdArgs
+}
+
+// Register 注册命令
+func (c *Cli) Register(cmd *Command) {
+	c.cmds[cmd.Cmd] = cmd
 }
 
 func (c *Cli) println(a ...interface{}) {
@@ -97,11 +116,24 @@ func (c *Cli) printf(format string, a ...interface{}) {
 	_, _ = fmt.Fprintf(c.stdout, format, a...)
 }
 
-func (c *Cli) handleInput(input string) {
-	input = strings.TrimSpace(input)
-	if len(input) == 0{
-		c.printf(input)
-	}else{
-		c.println(input)
+func (c *Cli) handleInput(cmdArgs []string) {
+	if len(cmdArgs) == 0 {
+		return
 	}
+
+	cmd, ok := c.cmds[cmdArgs[0]]
+	if !ok {
+		c.printf(c.color.Red("unknown cmd: `%v`\n"), cmdArgs[0])
+		return
+	}
+
+	prompt := c.prompt
+	c.prompt = fmt.Sprintf("[%s"+c.color.Purple("]%s"), c.color.Cyan(cmdArgs[0]), prompt)
+	cmd.Handler(c.readInputFunc, c.printf, cmdArgs[1:]...)
+	c.prompt = prompt
+}
+
+func (c *Cli) readInputFunc(prompt string) []string {
+	c.println(prompt)
+	return c.readInput()
 }

@@ -1,6 +1,7 @@
 package color
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -28,4 +29,6 @@ func TestColor_Format(t *testing.T) {
 	t.Log(c.Gray(str, Background))
 
 	t.Log(c.Red(c.Cyan(str), Background))
+
+	t.Log(fmt.Sprintf(c.Purple("[%s]%s"), c.Cyan("kainhuck"), "tutu"))
 }

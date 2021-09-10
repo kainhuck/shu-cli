@@ -36,6 +36,8 @@ func NewCli(ctx context.Context, cancel context.CancelFunc, prompt string, color
 		cmds:   make(map[string]*cmd.Command),
 	}
 
+	cli.Register(exitCmd)
+
 	return cli
 }
 
@@ -83,7 +85,12 @@ func (c *Cli) Run() {
 
 	go func() {
 		for {
-			c.handleInput(c.readInput())
+			select {
+			case <-c.ctx.Done():
+				return
+			default:
+				c.handleInput(c.readInput())
+			}
 		}
 	}()
 
@@ -154,4 +161,16 @@ func Printf(format string, a ...interface{}) {
 // Println 输出到cli.stdout
 func Println(a ...interface{}) {
 	cli.println(a...)
+}
+
+// 定义一些默认的命令
+
+var exitCmd = &cmd.Command{
+	Cmd:     "exit",
+	Usage:   "exit",
+	Desc:    "exit the cli",
+	Handler: func(args ...string) {
+		cli.cancel()
+		cli.println(cli.color.Yellow("Bye~"))
+	},
 }

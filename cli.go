@@ -21,9 +21,11 @@ type Cli struct {
 	cmds map[string]*Command
 }
 
+var cli *Cli
+
 // NewCli 新建cli
 func NewCli(ctx context.Context, cancel context.CancelFunc, prompt string, colorMod bool, stdout, stdin *os.File) *Cli {
-	return &Cli{
+	cli = &Cli{
 		prompt: prompt,
 		color:  color.Color(colorMod),
 		stdout: stdout,
@@ -32,6 +34,8 @@ func NewCli(ctx context.Context, cancel context.CancelFunc, prompt string, color
 		cancel: cancel,
 		cmds:   make(map[string]*Command),
 	}
+
+	return cli
 }
 
 // DefaultCli 新建默认的cli
@@ -129,11 +133,24 @@ func (c *Cli) handleInput(cmdArgs []string) {
 
 	prompt := c.prompt
 	c.prompt = fmt.Sprintf("[%s"+c.color.Purple("]%s"), c.color.Cyan(cmdArgs[0]), prompt)
-	cmd.Handler(c.readInputFunc, c.printf, cmdArgs[1:]...)
+	cmd.Handler(cmdArgs[1:]...)
 	c.prompt = prompt
 }
 
-func (c *Cli) readInputFunc(prompt string) []string {
-	c.println(prompt)
-	return c.readInput()
+// 定义一些全局方法供使用
+
+// ReadInput 从cli.stdin读取用户输入 会先打印提示语句 prompt
+func ReadInput(prompt string) []string {
+	cli.println(prompt)
+	return cli.readInput()
+}
+
+// Printf 格式化输出到cli.stdout
+func Printf(format string, a ...interface{}) {
+	cli.printf(format, a...)
+}
+
+// Println 输出到cli.stdout
+func Println(a ...interface{}) {
+	cli.println(a...)
 }

@@ -1,6 +1,6 @@
 package shu_cli
 
-type HandleFunc = func(readInput func(prompt string) []string, printf func(format string, a ...interface{}), args ...string)
+type HandleFunc = func(args ...string)
 
 // Command 命令
 type Command struct {

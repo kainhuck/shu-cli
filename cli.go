@@ -279,6 +279,7 @@ var helpCmd = &cmd.Command{
 			cmd, ok := cli.cmds[a]
 			if !ok {
 				cli.printf(cli.color.Red("unknown cmd: `%s`\n"), a)
+				continue
 			}
 			cli.printf("	cmd:	%s\n", cmd.Cmd)
 			cli.printf("	Usage:	%s\n", cmd.Usage)

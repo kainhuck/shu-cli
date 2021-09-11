@@ -275,15 +275,18 @@ var helpCmd = &cmd.Command{
 			return
 		}
 
-		for _, a := range args {
+		for i, a := range args {
 			cmd, ok := cli.cmds[a]
 			if !ok {
-				cli.printf(cli.color.Red("unknown cmd: `%s`\n"), a)
-				continue
+				cli.printf(cli.color.Red("	unknown cmd: `%s`\n"), a)
+			}else{
+				cli.printf("	cmd:	%s\n", cmd.Cmd)
+				cli.printf("	Usage:	%s\n", cmd.Usage)
+				cli.printf("	Desc:	%s\n", cmd.Desc)
 			}
-			cli.printf("	cmd:	%s\n", cmd.Cmd)
-			cli.printf("	Usage:	%s\n", cmd.Usage)
-			cli.printf("	Desc:	%s\n", cmd.Desc)
+			if i != len(args) - 1{
+				cli.println()
+			}
 		}
 	},
 }
